@@ -18,45 +18,59 @@ router.get('/', async (req, res) => {
             limit = 12
         } = req.query;
 
-        const offset = (parseInt(page) - 1) * parseInt(limit);
+        const toNumber = (value, fallback) => {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : fallback;
+        };
+
+        const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+        const limitNumber = Math.min(50, Math.max(1, parseInt(limit, 10) || 12));
+        const minPriceNumber = Math.max(0, toNumber(minPrice, 0));
+        const maxPriceNumber = Math.max(minPriceNumber, toNumber(maxPrice, 10000));
+        const minRatingNumber = Math.min(5, Math.max(0, toNumber(minRating, 0)));
+        const searchText = String(search || '').trim();
+        const subjectText = String(subject || '').trim();
+        const locationText = String(location || '').trim();
+
+        const offset = (pageNumber - 1) * limitNumber;
 
         // Construir query com filtros
         let whereConditions = ['t.is_active = TRUE'];
         let queryParams = [];
 
         // Filtro de busca (nome ou matéria)
-        if (search.trim()) {
+        if (searchText) {
             whereConditions.push('(u.name LIKE ? OR t.subject LIKE ? OR t.description LIKE ?)');
-            const searchParam = `%${search.trim()}%`;
+            const searchParam = `%${searchText}%`;
             queryParams.push(searchParam, searchParam, searchParam);
         }
 
         // Filtro por matéria específica
-        if (subject.trim()) {
+        if (subjectText) {
             whereConditions.push('t.subject LIKE ?');
-            queryParams.push(`%${subject.trim()}%`);
+            queryParams.push(`%${subjectText}%`);
         }
 
         // Filtro por faixa de preço
-        if (minPrice > 0) {
+        if (minPriceNumber > 0) {
             whereConditions.push('t.hourly_rate >= ?');
-            queryParams.push(parseFloat(minPrice));
+            queryParams.push(minPriceNumber);
         }
-        if (maxPrice < 10000) {
+        if (maxPriceNumber < 10000) {
             whereConditions.push('t.hourly_rate <= ?');
-            queryParams.push(parseFloat(maxPrice));
+            queryParams.push(maxPriceNumber);
         }
 
         // Filtro por localização
-        if (location.trim()) {
+        if (locationText) {
             whereConditions.push('t.location LIKE ?');
-            queryParams.push(`%${location.trim()}%`);
+            queryParams.push(`%${locationText}%`);
         }
 
         // Filtro por avaliação mínima
-        if (minRating > 0) {
+        if (minRatingNumber > 0) {
             whereConditions.push('t.rating >= ?');
-            queryParams.push(parseFloat(minRating));
+            queryParams.push(minRatingNumber);
         }
 
         const whereClause = whereConditions.length > 0 
@@ -85,7 +99,7 @@ router.get('/', async (req, res) => {
             INNER JOIN users u ON t.user_id = u.id
             ${whereClause}
             ORDER BY t.rating DESC, t.total_reviews DESC
-            LIMIT ? OFFSET ?
+            LIMIT ${limitNumber} OFFSET ${offset}
         `;
 
         // Query para contar total de professores (para paginação)
@@ -97,22 +111,33 @@ router.get('/', async (req, res) => {
         `;
 
         // Executar queries
-        const teachers = await database.query(teachersQuery, [...queryParams, parseInt(limit), offset]);
+        const teachers = await database.query(teachersQuery, queryParams);
         const [countResult] = await database.query(countQuery, queryParams);
         const totalTeachers = countResult.total;
 
         // Processar disponibilidade (se for JSON)
-        const processedTeachers = teachers.map(teacher => ({
-            ...teacher,
-            availability: teacher.availability ? 
-                (typeof teacher.availability === 'string' ? 
-                    JSON.parse(teacher.availability) : teacher.availability) : null
-        }));
+        const processedTeachers = teachers.map(teacher => {
+            let parsedAvailability = teacher.availability || null;
+
+            if (typeof parsedAvailability === 'string') {
+                try {
+                    parsedAvailability = JSON.parse(parsedAvailability);
+                } catch (e) {
+                    // Mantem o valor original quando a disponibilidade nao esta em JSON.
+                    parsedAvailability = teacher.availability;
+                }
+            }
+
+            return {
+                ...teacher,
+                availability: parsedAvailability
+            };
+        });
 
         // Calcular informações de paginação
-        const totalPages = Math.ceil(totalTeachers / parseInt(limit));
-        const hasNext = parseInt(page) < totalPages;
-        const hasPrev = parseInt(page) > 1;
+        const totalPages = Math.ceil(totalTeachers / limitNumber);
+        const hasNext = pageNumber < totalPages;
+        const hasPrev = pageNumber > 1;
 
         res.json({
             success: true,
@@ -120,7 +145,7 @@ router.get('/', async (req, res) => {
             data: {
                 teachers: processedTeachers,
                 pagination: {
-                    current: parseInt(page),
+                    current: pageNumber,
                     total: totalPages,
                     hasNext,
                     hasPrev,
@@ -132,6 +157,32 @@ router.get('/', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Erro ao listar professores:', error);
+        res.status(500).json({
+            error: true,
+            message: 'Erro interno do servidor'
+        });
+    }
+});
+
+// Obter matérias disponíveis (para filtros)
+router.get('/subjects/list', async (req, res) => {
+    try {
+        const subjects = await database.query(`
+            SELECT DISTINCT t.subject, COUNT(*) as teacher_count
+            FROM teachers t
+            WHERE t.is_active = TRUE
+            GROUP BY t.subject
+            ORDER BY teacher_count DESC, t.subject ASC
+        `);
+
+        res.json({
+            success: true,
+            message: 'Matérias obtidas com sucesso',
+            data: subjects
+        });
+
+    } catch (error) {
+        console.error('❌ Erro ao obter matérias:', error);
         res.status(500).json({
             error: true,
             message: 'Erro interno do servidor'
@@ -214,32 +265,6 @@ router.get('/:id', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Erro ao obter detalhes do professor:', error);
-        res.status(500).json({
-            error: true,
-            message: 'Erro interno do servidor'
-        });
-    }
-});
-
-// Obter matérias disponíveis (para filtros)
-router.get('/subjects/list', async (req, res) => {
-    try {
-        const subjects = await database.query(`
-            SELECT DISTINCT t.subject, COUNT(*) as teacher_count
-            FROM teachers t
-            WHERE t.is_active = TRUE
-            GROUP BY t.subject
-            ORDER BY teacher_count DESC, t.subject ASC
-        `);
-
-        res.json({
-            success: true,
-            message: 'Matérias obtidas com sucesso',
-            data: subjects
-        });
-
-    } catch (error) {
-        console.error('❌ Erro ao obter matérias:', error);
         res.status(500).json({
             error: true,
             message: 'Erro interno do servidor'

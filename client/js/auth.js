@@ -46,7 +46,8 @@ function updateUIForLoggedInUser(user) {
     }
     
     if (userAvatar) {
-        userAvatar.src = user.profileImage || APP_CONFIG.DEFAULT_IMAGES.AVATAR;
+        const avatarSrc = user.profileImage || user.profile_image || APP_CONFIG.DEFAULT_IMAGES.AVATAR;
+        userAvatar.src = avatarSrc;
         userAvatar.alt = `Avatar de ${user.name}`;
     }
     
@@ -81,6 +82,8 @@ async function handleLogin(event) {
     event.preventDefault();
     
     const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : '';
     const formData = new FormData(form);
     const loginData = {
         email: formData.get('email'),
@@ -102,10 +105,10 @@ async function handleLogin(event) {
     
     try {
         // Desativar botão de submit
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+        }
         
         // Fazer requisição de login
         const response = await ApiClient.post(APP_CONFIG.ENDPOINTS.LOGIN, loginData);
@@ -150,9 +153,10 @@ async function handleLogin(event) {
         );
     } finally {
         // Reativar botão
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
     }
 }
 
@@ -161,6 +165,8 @@ async function handleRegister(event) {
     event.preventDefault();
     
     const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : '';
     const formData = new FormData(form);
     
     const registerData = {
@@ -218,10 +224,10 @@ async function handleRegister(event) {
     
     try {
         // Desativar botão de submit
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando conta...';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando conta...';
+        }
         
         // Fazer requisição de registro
         const response = await ApiClient.post(APP_CONFIG.ENDPOINTS.REGISTER, registerData);
@@ -267,9 +273,10 @@ async function handleRegister(event) {
         );
     } finally {
         // Reativar botão
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
     }
 }
 

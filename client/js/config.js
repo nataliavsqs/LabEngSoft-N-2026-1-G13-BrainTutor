@@ -17,6 +17,7 @@ const APP_CONFIG = {
         // Usuários
         USER_PROFILE: '/users/profile',
         USER_STATS: '/users/stats',
+        CHANGE_PASSWORD: '/users/change-password',
         
         // Professores
         TEACHERS: '/teachers',

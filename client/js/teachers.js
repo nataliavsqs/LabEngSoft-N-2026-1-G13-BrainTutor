@@ -11,7 +11,7 @@ let teachersState = {
         subject: '',
         location: '',
         minPrice: 0,
-        maxPrice: 200,
+        maxPrice: '',
         minRating: 0
     },
     isLoading: false,
@@ -182,6 +182,16 @@ function renderTeachers() {
         `;
         return;
     }
+
+    const normalizeRating = (value) => {
+        const numericValue = Number(value);
+        return Number.isFinite(numericValue) ? numericValue : 0;
+    };
+
+    const normalizeReviewCount = (value) => {
+        const numericValue = Number(value);
+        return Number.isFinite(numericValue) ? numericValue : 0;
+    };
     
     grid.innerHTML = teachersState.teachers.map(teacher => `
         <div class="teacher-card" onclick="showTeacherDetails(${teacher.id})">
@@ -198,10 +208,10 @@ function renderTeachers() {
             
             <div class="teacher-rating">
                 <div class="stars">
-                    ${Formatters.rating(teacher.rating)}
+                    ${Formatters.rating(normalizeRating(teacher.rating))}
                 </div>
                 <span class="rating-text">
-                    ${teacher.rating.toFixed(1)} (${teacher.total_reviews} ${teacher.total_reviews === 1 ? 'avaliação' : 'avaliações'})
+                    ${normalizeRating(teacher.rating).toFixed(1)} (${normalizeReviewCount(teacher.total_reviews)} ${normalizeReviewCount(teacher.total_reviews) === 1 ? 'avaliação' : 'avaliações'})
                 </span>
             </div>
             
@@ -353,6 +363,8 @@ function renderTeacherDetails(teacher, reviews) {
     if (!details) return;
     
     const canSchedule = UserManager.isLoggedIn() && UserManager.getUserType() === APP_CONFIG.USER_TYPES.STUDENT;
+    const ratingValue = Number.isFinite(Number(teacher.rating)) ? Number(teacher.rating) : 0;
+    const reviewCount = Number.isFinite(Number(teacher.total_reviews)) ? Number(teacher.total_reviews) : 0;
     
     details.innerHTML = `
         <div class="teacher-details">
@@ -368,9 +380,9 @@ function renderTeacherDetails(teacher, reviews) {
                     
                     <div class="teacher-profile-rating">
                         <div class="stars">
-                            ${Formatters.rating(teacher.rating)}
+                            ${Formatters.rating(ratingValue)}
                         </div>
-                        <span>${teacher.rating.toFixed(1)} (${teacher.total_reviews} avaliações)</span>
+                        <span>${ratingValue.toFixed(1)} (${reviewCount} avaliações)</span>
                     </div>
                     
                     <div class="teacher-profile-price">
@@ -482,7 +494,8 @@ function applyFilters() {
     teachersState.filters.search = document.getElementById('heroSearchInput')?.value || '';
     teachersState.filters.subject = document.getElementById('subjectFilter')?.value || '';
     teachersState.filters.location = document.getElementById('locationFilter')?.value || '';
-    teachersState.filters.maxPrice = parseInt(document.getElementById('priceRange')?.value) || 200;
+    const selectedMaxPrice = parseInt(document.getElementById('priceRange')?.value) || 200;
+    teachersState.filters.maxPrice = selectedMaxPrice >= 200 ? '' : selectedMaxPrice;
     teachersState.filters.minRating = parseFloat(document.getElementById('ratingFilter')?.value) || 0;
     
     debugLog('Aplicando filtros:', teachersState.filters);
@@ -520,7 +533,7 @@ function clearFilters() {
         subject: '',
         location: '',
         minPrice: 0,
-        maxPrice: 200,
+        maxPrice: '',
         minRating: 0
     };
     

@@ -5,7 +5,8 @@ let profileState = {
     specialties: [],
     selectedSpecialties: [],
     photoChanged: false,
-    newPhotoData: null
+    newPhotoData: null,
+    listenersInitialized: false
 };
 
 // Initialize profile page
@@ -18,6 +19,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.location.href = '../index.html';
         return;
     }
+
+    // Inicializa listeners de UI antes das chamadas assíncronas.
+    // Assim o modal de senha continua funcional mesmo se o carregamento do perfil falhar.
+    setupProfileEventListeners();
     
     try {
         // Carregar dados do perfil
@@ -25,9 +30,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Carregar especialidades
         await loadSpecialties();
-        
-        // Configurar event listeners
-        setupProfileEventListeners();
         
         // Mostrar conteúdo
         DOMUtils.hide('loadingProfile');
@@ -206,6 +208,11 @@ function toggleSpecialty(specialtyId) {
 
 // Configurar event listeners
 function setupProfileEventListeners() {
+    if (profileState.listenersInitialized) {
+        return;
+    }
+    profileState.listenersInitialized = true;
+
     // Form de informações pessoais
     const personalForm = document.getElementById('personalInfoForm');
     if (personalForm) {
@@ -229,6 +236,34 @@ function setupProfileEventListeners() {
     if (phoneField) {
         phoneField.addEventListener('input', formatPhoneNumber);
     }
+
+    // Fluxo de troca de senha
+    const changePasswordBtn = document.getElementById('changePasswordBtn');
+    if (changePasswordBtn) {
+        changePasswordBtn.addEventListener('click', showChangePasswordModal);
+    }
+
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', handleChangePassword);
+    }
+
+    const closeChangePasswordBtn = document.getElementById('closeChangePasswordBtn');
+    if (closeChangePasswordBtn) {
+        closeChangePasswordBtn.addEventListener('click', closeChangePasswordModal);
+    }
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', closeChangePasswordModal);
+    }
+
+    // Fechar modal de senha com tecla Esc
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeChangePasswordModal();
+        }
+    });
 }
 
 // Atualizar contador de caracteres
@@ -307,7 +342,13 @@ async function handlePersonalInfoSubmit(event) {
         if (response.success) {
             // Atualizar estado local
             profileState.user = { ...profileState.user, ...data };
-            UserManager.set({ ...UserManager.get(), name: displayName });
+            const currentUser = UserManager.get() || {};
+            UserManager.set({
+                ...currentUser,
+                name: displayName,
+                profileImage: data.profileImage || currentUser.profileImage || currentUser.profile_image || null,
+                profile_image: data.profileImage || currentUser.profile_image || currentUser.profileImage || null
+            });
             
             // Resetar estado da foto
             profileState.photoChanged = false;
@@ -364,6 +405,10 @@ async function handleProfessionalInfoSubmit(event) {
         
         // Preparar dados
         const data = {
+            name: document.getElementById('fullName')?.value?.trim() || profileState.user?.name,
+            displayName: document.getElementById('displayName')?.value?.trim() || profileState.user?.display_name || profileState.user?.name,
+            phone: document.getElementById('phone')?.value || profileState.user?.phone || null,
+            birthDate: document.getElementById('birthDate')?.value || profileState.user?.birth_date || null,
             bio: document.getElementById('bio').value,
             linkedinUrl: document.getElementById('linkedinUrl').value,
             githubUrl: document.getElementById('githubUrl').value,
@@ -415,8 +460,61 @@ function triggerPhotoUpload() {
     }
 }
 
+// Upload constraints and optimization defaults
+const PHOTO_MAX_INPUT_SIZE = 8 * 1024 * 1024; // 8MB
+const PHOTO_MAX_OUTPUT_SIZE = 2 * 1024 * 1024; // 2MB
+const PHOTO_PRIMARY_MAX_DIMENSION = 1024;
+const PHOTO_PRIMARY_QUALITY = 0.82;
+const PHOTO_FALLBACK_MAX_DIMENSION = 800;
+const PHOTO_FALLBACK_QUALITY = 0.72;
+
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Não foi possível ler o arquivo da imagem'));
+        reader.readAsDataURL(file);
+    });
+}
+
+function loadImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Não foi possível processar a imagem selecionada'));
+        img.src = dataUrl;
+    });
+}
+
+function getDataUrlSizeBytes(dataUrl) {
+    const base64Part = String(dataUrl).split(',')[1] || '';
+    return Math.ceil((base64Part.length * 3) / 4);
+}
+
+async function resizeAndCompressImage(dataUrl, maxDimension, quality) {
+    const image = await loadImage(dataUrl);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    let { width, height } = image;
+    const largerSide = Math.max(width, height);
+
+    if (largerSide > maxDimension) {
+        const scale = maxDimension / largerSide;
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(image, 0, 0, width, height);
+
+    // JPEG reduz bastante payload de data URL para transporte via JSON
+    return canvas.toDataURL('image/jpeg', quality);
+}
+
 // Handle photo upload
-function handlePhotoUpload(event) {
+async function handlePhotoUpload(event) {
     const file = event.target.files[0];
     
     if (!file) return;
@@ -427,32 +525,53 @@ function handlePhotoUpload(event) {
         return;
     }
     
-    // Validar tamanho (2MB)
-    if (file.size > 2 * 1024 * 1024) {
-        showToast('A imagem deve ter no máximo 2MB', APP_CONFIG.TOAST_TYPES.ERROR);
+    // Validar tamanho inicial do arquivo antes de processar
+    if (file.size > PHOTO_MAX_INPUT_SIZE) {
+        showToast('A imagem original deve ter no máximo 8MB', APP_CONFIG.TOAST_TYPES.ERROR);
         return;
     }
-    
-    // Ler e exibir prévia
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
+
+    try {
+        const originalDataUrl = await readFileAsDataURL(file);
+        let optimizedDataUrl = await resizeAndCompressImage(
+            originalDataUrl,
+            PHOTO_PRIMARY_MAX_DIMENSION,
+            PHOTO_PRIMARY_QUALITY
+        );
+
+        if (getDataUrlSizeBytes(optimizedDataUrl) > PHOTO_MAX_OUTPUT_SIZE) {
+            optimizedDataUrl = await resizeAndCompressImage(
+                originalDataUrl,
+                PHOTO_FALLBACK_MAX_DIMENSION,
+                PHOTO_FALLBACK_QUALITY
+            );
+        }
+
+        if (getDataUrlSizeBytes(optimizedDataUrl) > PHOTO_MAX_OUTPUT_SIZE) {
+            showToast('Não foi possível otimizar a imagem para até 2MB. Escolha outra foto.', APP_CONFIG.TOAST_TYPES.ERROR);
+            return;
+        }
+
         const profilePhoto = document.getElementById('profilePhoto');
         if (profilePhoto) {
-            profilePhoto.src = e.target.result;
+            profilePhoto.src = optimizedDataUrl;
         }
         
         // Salvar dados da foto
         profileState.photoChanged = true;
-        profileState.newPhotoData = e.target.result;
+        profileState.newPhotoData = optimizedDataUrl;
         
         showToast(
-            'Foto selecionada! Clique em "Salvar Alterações Pessoais" para confirmar.',
+            'Foto otimizada e selecionada! Clique em "Salvar Alterações Pessoais" para confirmar.',
             APP_CONFIG.TOAST_TYPES.INFO
         );
-    };
-    
-    reader.readAsDataURL(file);
+    } catch (error) {
+        errorLog('Erro ao processar foto de perfil:', error);
+        showToast('Erro ao processar imagem. Tente outra foto.', APP_CONFIG.TOAST_TYPES.ERROR);
+    } finally {
+        // Permite selecionar o mesmo arquivo novamente se necessário
+        event.target.value = '';
+    }
 }
 
 // Show change password modal
@@ -460,9 +579,11 @@ function showChangePasswordModal() {
     const modal = document.getElementById('changePasswordModal');
     const overlay = document.getElementById('modalOverlay');
     
-    if (modal && overlay) {
+    if (modal) {
         modal.classList.add('active');
-        overlay.classList.add('active');
+        if (overlay) {
+            overlay.classList.add('active');
+        }
         document.body.style.overflow = 'hidden';
     }
 }
@@ -472,9 +593,11 @@ function closeChangePasswordModal() {
     const modal = document.getElementById('changePasswordModal');
     const overlay = document.getElementById('modalOverlay');
     
-    if (modal && overlay) {
+    if (modal) {
         modal.classList.remove('active');
-        overlay.classList.remove('active');
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
         document.body.style.overflow = '';
         
         // Limpar formulário
@@ -494,9 +617,14 @@ async function handleChangePassword(event) {
     const originalText = submitBtn.innerHTML;
     
     try {
-        const currentPassword = document.getElementById('currentPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+        const currentPassword = document.getElementById('currentPassword').value.trim();
+        const newPassword = document.getElementById('newPassword').value.trim();
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value.trim();
+
+        if (!currentPassword) {
+            showToast('Informe sua senha atual', APP_CONFIG.TOAST_TYPES.ERROR);
+            return;
+        }
         
         // Validações
         if (newPassword !== confirmNewPassword) {
@@ -508,13 +636,18 @@ async function handleChangePassword(event) {
             showToast('A nova senha deve ter pelo menos 6 caracteres', APP_CONFIG.TOAST_TYPES.ERROR);
             return;
         }
+
+        if (newPassword === currentPassword) {
+            showToast('A nova senha deve ser diferente da senha atual', APP_CONFIG.TOAST_TYPES.ERROR);
+            return;
+        }
         
         // Desabilitar botão
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Alterando...';
         
         // Enviar requisição
-        const response = await ApiClient.put('/users/change-password', {
+        const response = await ApiClient.put(APP_CONFIG.ENDPOINTS.CHANGE_PASSWORD, {
             currentPassword,
             newPassword
         });

@@ -11,6 +11,10 @@ ADD COLUMN github_url VARCHAR(500) AFTER linkedin_url,
 ADD COLUMN portfolio_url VARCHAR(500) AFTER github_url,
 ADD COLUMN other_links TEXT AFTER portfolio_url;
 
+-- Expandir campo para suportar imagens em base64 (Data URL)
+ALTER TABLE users
+MODIFY COLUMN profile_image LONGTEXT;
+
 -- Adicionar campos na tabela teachers
 ALTER TABLE teachers
 ADD COLUMN professional_title VARCHAR(255) AFTER subject,

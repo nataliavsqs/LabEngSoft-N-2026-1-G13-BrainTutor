@@ -81,7 +81,7 @@
                                        style="display: none;"
                                        onchange="handlePhotoUpload(event)">
                             </div>
-                            <small class="form-hint">Formatos aceitos: JPG, PNG. Tamanho máximo: 2MB</small>
+                            <small class="form-hint">Formatos aceitos: JPG, PNG, WEBP. Até 8MB (otimizada automaticamente para envio de até 2MB)</small>
                         </div>
 
                         <div class="form-row">
@@ -298,7 +298,7 @@
                                     <p>Mantenha sua conta segura</p>
                                 </div>
                             </div>
-                            <button class="btn btn-outline btn-sm" onclick="showChangePasswordModal()">
+                            <button id="changePasswordBtn" type="button" class="btn btn-outline btn-sm">
                                 Alterar
                             </button>
                         </div>
@@ -335,18 +335,20 @@
         </div>
     </main>
 
+    <div id="modalOverlay" class="modal-overlay"></div>
+
     <!-- Change Password Modal -->
     <div id="changePasswordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Alterar Senha</h2>
                 <p>Digite sua senha atual e a nova senha</p>
-                <button class="modal-close" onclick="closeChangePasswordModal()">
+                <button id="closeChangePasswordBtn" type="button" class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
-            <form class="modal-form" id="changePasswordForm" onsubmit="handleChangePassword(event)">
+            <form class="modal-form" id="changePasswordForm">
                 <div class="form-group">
                     <label for="currentPassword">Senha Atual <span class="required">*</span></label>
                     <input type="password" 

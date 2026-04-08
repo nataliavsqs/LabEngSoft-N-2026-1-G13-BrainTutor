@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const database = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -96,16 +97,27 @@ router.put('/profile', authMiddleware, async (req, res) => {
             specialties 
         } = req.body;
 
-        // Validações básicas
-        if (!name) {
-            return res.status(400).json({
-                error: true,
-                message: 'Nome é obrigatório'
-            });
-        }
-
         // Usar transação para garantir consistência
         await database.transaction(async (connection) => {
+            const [userRows] = await connection.execute(
+                `SELECT name, display_name, phone, birth_date, profile_image, bio,
+                        linkedin_url, github_url, portfolio_url, other_links
+                 FROM users WHERE id = ?`,
+                [userId]
+            );
+
+            if (!userRows.length) {
+                throw new Error('Usuário não encontrado');
+            }
+
+            const currentUser = userRows[0];
+            const hasNameInPayload = typeof name === 'string';
+            const nextName = hasNameInPayload ? name.trim() : currentUser.name;
+
+            if (!nextName) {
+                throw new Error('Nome é obrigatório');
+            }
+
             // Atualizar dados básicos do usuário
             await connection.execute(
                 `UPDATE users SET 
@@ -121,16 +133,16 @@ router.put('/profile', authMiddleware, async (req, res) => {
                  other_links = ?
                  WHERE id = ?`,
                 [
-                    name, 
-                    displayName || name,
-                    phone || null, 
-                    birthDate || null,
-                    profileImage || null,
-                    bio || null,
-                    linkedinUrl || null,
-                    githubUrl || null,
-                    portfolioUrl || null,
-                    otherLinks || null,
+                    nextName,
+                    typeof displayName === 'string' ? (displayName.trim() || nextName) : (currentUser.display_name || nextName),
+                    typeof phone !== 'undefined' ? (phone || null) : currentUser.phone,
+                    typeof birthDate !== 'undefined' ? (birthDate || null) : currentUser.birth_date,
+                    typeof profileImage !== 'undefined' ? (profileImage || null) : currentUser.profile_image,
+                    typeof bio !== 'undefined' ? (bio || null) : currentUser.bio,
+                    typeof linkedinUrl !== 'undefined' ? (linkedinUrl || null) : currentUser.linkedin_url,
+                    typeof githubUrl !== 'undefined' ? (githubUrl || null) : currentUser.github_url,
+                    typeof portfolioUrl !== 'undefined' ? (portfolioUrl || null) : currentUser.portfolio_url,
+                    typeof otherLinks !== 'undefined' ? (otherLinks || null) : currentUser.other_links,
                     userId
                 ]
             );
@@ -226,6 +238,20 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error('❌ Erro ao atualizar perfil:', error);
+        if (error.message === 'Nome é obrigatório') {
+            return res.status(400).json({
+                error: true,
+                message: error.message
+            });
+        }
+
+        if (error.message === 'Usuário não encontrado') {
+            return res.status(404).json({
+                error: true,
+                message: error.message
+            });
+        }
+
         res.status(500).json({
             error: true,
             message: 'Erro interno do servidor'
@@ -336,7 +362,8 @@ router.get('/stats', authMiddleware, async (req, res) => {
 router.put('/change-password', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { currentPassword, newPassword } = req.body;
+        const currentPassword = String(req.body.currentPassword || '');
+        const newPassword = String(req.body.newPassword || '');
 
         // Validações
         if (!currentPassword || !newPassword) {
@@ -353,8 +380,14 @@ router.put('/change-password', authMiddleware, async (req, res) => {
             });
         }
 
+        if (newPassword === currentPassword) {
+            return res.status(400).json({
+                error: true,
+                message: 'A nova senha deve ser diferente da senha atual'
+            });
+        }
+
         // Buscar usuário e verificar senha atual
-        const bcrypt = require('bcryptjs');
         const users = await database.query(
             'SELECT password FROM users WHERE id = ?',
             [userId]

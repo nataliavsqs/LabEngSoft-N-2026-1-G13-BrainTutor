@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     user_type ENUM('student', 'teacher') NOT NULL,
     phone VARCHAR(20),
-    profile_image VARCHAR(255),
+    profile_image LONGTEXT,
     is_verified BOOLEAN DEFAULT FALSE,
     reset_token VARCHAR(255),
     reset_token_expires DATETIME,
