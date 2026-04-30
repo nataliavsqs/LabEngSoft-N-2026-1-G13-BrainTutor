@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brain Tutor - Conectando mentes, construindo futuros</title>
-    <meta name="description" content="Encontre os melhores professores particulares ou ofereça suas aulas. Plataforma completa para educação personalizada.">
+    <meta name="description"
+        content="Encontre os melhores professores particulares ou ofereça suas aulas. Plataforma completa para educação personalizada.">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
@@ -20,7 +23,7 @@
                     <i class="fas fa-graduation-cap"></i>
                     <span>Brain Tutor</span>
                 </div>
-                
+
                 <div class="nav-links" id="navLinks">
                     <a href="#home" class="nav-link">Início</a>
                     <a href="#teachers" class="nav-link">Professores</a>
@@ -36,14 +39,16 @@
                 <div class="nav-user hidden" id="navUser">
                     <div class="user-dropdown">
                         <button class="user-btn" onclick="toggleUserMenu()">
-                            <img src="assets/images/default-avatar.svg" alt="Avatar" class="user-avatar" id="userAvatar">
+                            <img src="assets/images/default-avatar.svg" alt="Avatar" class="user-avatar"
+                                id="userAvatar">
                             <span id="userName">Usuário</span>
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="dropdown-menu" id="userDropdown">
                             <a href="pages/profile.html"><i class="fas fa-user"></i> Meu Perfil</a>
-                            <a href="#" onclick="showDashboard()"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            <a href="javascript:void(0)" onclick="showDashboard()"><i class="fas fa-tachometer-alt"></i>
+                                Dashboard</a>
+                            <a href="javascript:void(0)" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</a>
                         </div>
                     </div>
                 </div>
@@ -64,12 +69,14 @@
             <div class="hero-content">
                 <div class="hero-text">
                     <h1>Encontre o professor <span class="highlight">perfeito</span> para você</h1>
-                    <p>Conectamos estudantes aos melhores professores particulares. Aprenda no seu ritmo, alcance seus objetivos.</p>
-                    
+                    <p>Conectamos estudantes aos melhores professores particulares. Aprenda no seu ritmo, alcance seus
+                        objetivos.</p>
+
                     <div class="hero-search">
                         <div class="search-container">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Buscar por nome, matéria ou palavra-chave..." id="heroSearchInput">
+                            <input type="text" placeholder="Buscar por nome, matéria ou palavra-chave..."
+                                id="heroSearchInput">
                             <button class="search-btn" onclick="searchTeachers()">Buscar</button>
                         </div>
                     </div>
@@ -89,7 +96,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="hero-image">
                     <img src="assets/images/hero-illustration.svg" alt="Ilustração de estudos" />
                 </div>
@@ -116,19 +123,22 @@
 
                         <div class="filter-group">
                             <label for="locationFilter">Localização:</label>
-                            <input type="text" id="locationFilter" placeholder="Cidade, estado..." onchange="applyFilters()">
+                            <input type="text" id="locationFilter" placeholder="Cidade, estado..."
+                                onchange="applyFilters()">
                         </div>
 
                         <div class="filter-group">
                             <label for="priceRange">Preço máximo:</label>
-                            <input type="range" id="priceRange" min="0" max="200" value="200" onchange="updatePriceLabel(); applyFilters()">
+                            <input type="range" id="priceRange" min="0" max="200" value="200"
+                                onchange="updatePriceLabel(); applyFilters()">
                             <span id="priceLabel">R$ 200/h</span>
                         </div>
 
                         <div class="filter-group">
                             <label for="ratingFilter">Avaliação mínima:</label>
                             <div class="rating-filter">
-                                <input type="range" id="ratingFilter" min="0" max="5" step="0.5" value="0" onchange="updateRatingLabel(); applyFilters()">
+                                <input type="range" id="ratingFilter" min="0" max="5" step="0.5" value="0"
+                                    onchange="updateRatingLabel(); applyFilters()">
                                 <span id="ratingLabel">Qualquer</span>
                             </div>
                         </div>
@@ -168,7 +178,8 @@
                             <i class="fas fa-user-graduate"></i>
                         </div>
                         <h3>Professores Qualificados</h3>
-                        <p>Todos os nossos professores passam por um rigoroso processo de seleção e verificação de qualificações.</p>
+                        <p>Todos os nossos professores passam por um rigoroso processo de seleção e verificação de
+                            qualificações.</p>
                     </div>
 
                     <div class="feature-card">
@@ -210,30 +221,30 @@
                     </div>
                     <p>Conectando mentes, construindo futuros através da educação personalizada.</p>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="javascript:void(0)"><i class="fab fa-facebook"></i></a>
+                        <a href="javascript:void(0)"><i class="fab fa-instagram"></i></a>
+                        <a href="javascript:void(0)"><i class="fab fa-twitter"></i></a>
+                        <a href="javascript:void(0)"><i class="fab fa-linkedin"></i></a>
                     </div>
                 </div>
 
                 <div class="footer-section">
                     <h4>Para Estudantes</h4>
                     <ul>
-                        <li><a href="#">Encontrar Professores</a></li>
-                        <li><a href="#">Como Funciona</a></li>
-                        <li><a href="#">Preços</a></li>
-                        <li><a href="#">Ajuda</a></li>
+                        <li><a href="javascript:void(0)">Encontrar Professores</a></li>
+                        <li><a href="javascript:void(0)">Como Funciona</a></li>
+                        <li><a href="javascript:void(0)">Preços</a></li>
+                        <li><a href="javascript:void(0)">Ajuda</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-section">
                     <h4>Para Professores</h4>
                     <ul>
-                        <li><a href="#">Ensinar na Plataforma</a></li>
-                        <li><a href="#">Centro de Recursos</a></li>
-                        <li><a href="#">Políticas</a></li>
-                        <li><a href="#">Suporte</a></li>
+                        <li><a href="javascript:void(0)">Ensinar na Plataforma</a></li>
+                        <li><a href="javascript:void(0)">Centro de Recursos</a></li>
+                        <li><a href="javascript:void(0)">Políticas</a></li>
+                        <li><a href="javascript:void(0)">Suporte</a></li>
                     </ul>
                 </div>
 
@@ -255,7 +266,7 @@
 
     <!-- Modals -->
     <div id="modalOverlay" class="modal-overlay" onclick="closeModal()"></div>
-    
+
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -276,13 +287,14 @@
                 <div class="form-group">
                     <label for="loginPassword">Senha</label>
                     <input type="password" id="loginPassword" name="password" required>
-                    <a href="#" class="forgot-password" onclick="showForgotPassword()">Esqueceu sua senha?</a>
+                    <a href="javascript:void(0)" class="forgot-password" onclick="showForgotPassword()">Esqueceu sua
+                        senha?</a>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-full">Entrar</button>
 
                 <div class="modal-footer">
-                    <p>Não tem uma conta? <a href="#" onclick="showRegister()">Cadastre-se</a></p>
+                    <p>Não tem uma conta? <a href="javascript:void(0)" onclick="showRegister()">Cadastre-se</a></p>
                 </div>
             </form>
         </div>
@@ -307,17 +319,20 @@
 
                 <div class="form-group">
                     <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" name="email" placeholder="Ex: joao@email.com (pode ser qualquer email para testar)" required>
+                    <input type="email" id="registerEmail" name="email"
+                        placeholder="Ex: joao@email.com (pode ser qualquer email para testar)" required>
                 </div>
 
                 <div class="form-group">
                     <label for="registerPassword">Senha (mínimo 6 caracteres)</label>
-                    <input type="password" id="registerPassword" name="password" placeholder="Ex: 123456" required minlength="6">
+                    <input type="password" id="registerPassword" name="password" placeholder="Ex: 123456" required
+                        minlength="6">
                 </div>
 
                 <div class="form-group">
                     <label for="confirmPassword">Confirmar senha</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Digite a mesma senha" required>
+                    <input type="password" id="confirmPassword" name="confirmPassword"
+                        placeholder="Digite a mesma senha" required>
                 </div>
 
                 <div class="form-group">
@@ -331,7 +346,7 @@
                                 <p>Quero encontrar professores</p>
                             </label>
                         </div>
-                        
+
                         <div class="user-type-option" data-type="teacher">
                             <input type="radio" id="teacherType" name="userType" value="teacher">
                             <label for="teacherType">
@@ -351,19 +366,21 @@
 
                     <div class="form-group">
                         <label for="teacherRate">Valor por hora (R$)</label>
-                        <input type="number" id="teacherRate" name="hourlyRate" placeholder="Ex: 90.00" step="0.01" min="1">
+                        <input type="number" id="teacherRate" name="hourlyRate" placeholder="Ex: 90.00" step="0.01"
+                            min="1">
                     </div>
 
                     <div class="form-group">
                         <label for="teacherDescription">Breve descrição</label>
-                        <textarea id="teacherDescription" name="description" placeholder="Conte um pouco sobre sua experiência..."></textarea>
+                        <textarea id="teacherDescription" name="description"
+                            placeholder="Conte um pouco sobre sua experiência..."></textarea>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-full">Criar conta</button>
 
                 <div class="modal-footer">
-                    <p>Já tem uma conta? <a href="#" onclick="showLogin()">Fazer login</a></p>
+                    <p>Já tem uma conta? <a href="javascript:void(0)" onclick="showLogin()">Fazer login</a></p>
                 </div>
             </form>
         </div>
@@ -389,7 +406,7 @@
                 <button type="submit" class="btn btn-primary btn-full">Enviar instruções</button>
 
                 <div class="modal-footer">
-                    <p><a href="#" onclick="showLogin()">← Voltar para o login</a></p>
+                    <p><a href="javascript:void(0)" onclick="showLogin()">← Voltar para o login</a></p>
                 </div>
             </form>
         </div>
@@ -415,8 +432,9 @@
     <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
+    <script src="js/auth.js?v=20260429"></script>
     <script src="js/teachers.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 </html>

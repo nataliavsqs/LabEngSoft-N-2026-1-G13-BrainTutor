@@ -307,7 +307,7 @@ async function handlePersonalInfoSubmit(event) {
     
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
+    if (submitBtn) submitBtn.dataset.originalText = submitBtn.innerHTML || '';
     
     try {
         // Validações
@@ -371,7 +371,8 @@ async function handlePersonalInfoSubmit(event) {
         );
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.innerHTML = submitBtn.dataset.originalText || submitBtn.innerHTML;
+        delete submitBtn.dataset.originalText;
     }
 }
 
@@ -381,7 +382,7 @@ async function handleProfessionalInfoSubmit(event) {
     
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
+    if (submitBtn) submitBtn.dataset.originalText = submitBtn.innerHTML || '';
     
     try {
         // Validações
@@ -448,7 +449,8 @@ async function handleProfessionalInfoSubmit(event) {
         );
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.innerHTML = submitBtn.dataset.originalText || submitBtn.innerHTML;
+        delete submitBtn.dataset.originalText;
     }
 }
 
@@ -614,7 +616,7 @@ async function handleChangePassword(event) {
     
     const form = event.target;
     const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
+    if (submitBtn) submitBtn.dataset.originalText = submitBtn.innerHTML || '';
     
     try {
         const currentPassword = document.getElementById('currentPassword').value.trim();
@@ -670,7 +672,8 @@ async function handleChangePassword(event) {
         );
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.innerHTML = submitBtn.dataset.originalText || submitBtn.innerHTML;
+        delete submitBtn.dataset.originalText;
     }
 }
 

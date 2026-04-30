@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Inicializar seções específicas
         initializeSections();
+
+        // Abrir modal solicitado via URL, usado pela rota antiga de recuperação
+        openModalFromUrl();
         
         appState.isInitialized = true;
         debugLog('✅ Aplicação Brain Tutor inicializada com sucesso');
@@ -58,15 +61,46 @@ function initializeApp() {
     applyInitialUISettings();
 }
 
+// Abrir modal conforme parâmetro da URL
+function openModalFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const modal = params.get('modal');
+
+    if (modal === 'forgot-password') {
+        history.replaceState({}, '', window.location.pathname + window.location.hash);
+        setTimeout(() => {
+            showForgotPassword();
+        }, 0);
+    }
+}
+
 // Configurar navegação
 function setupNavigation() {
     // Smooth scroll para links internos
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                smoothScrollTo(target, 100);
+            const href = this.getAttribute('href');
+
+            // Ignorar âncoras vazias como "#" que não apontam para um elemento
+            if (!href || href === '#') return;
+
+            if (href.startsWith('#')) {
+                const target = document.getElementById(href.slice(1));
+                if (target) {
+                    smoothScrollTo(target, 100);
+                }
+                return;
+            }
+
+            try {
+                const target = document.querySelector(href);
+                if (target) {
+                    smoothScrollTo(target, 100);
+                }
+            } catch (err) {
+                // Se o seletor for inválido, apenas ignorar (evita exceptions no console)
+                errorLog('Seletor inválido ao tentar smoothScroll:', href, err);
             }
         });
     });

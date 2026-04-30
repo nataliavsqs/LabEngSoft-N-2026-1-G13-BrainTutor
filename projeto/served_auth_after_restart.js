@@ -396,15 +396,8 @@ function showRegister() {
 
 // Função para redirecionar para página de recuperação de senha
 function showForgotPassword() {
-    debugLog('Mostrando modal de recuperação de senha');
-    closeModal(); // Fechar modal atual antes de abrir o de recuperação
-    showModal('forgotPasswordModal');
-
-    // Focar no campo de email
-    setTimeout(() => {
-        const emailInput = document.getElementById('forgotEmail');
-        if (emailInput) emailInput.focus();
-    }, 300);
+    debugLog('Redirecionando para página de recuperação de senha');
+    window.location.href = 'pages/forgot-password.html';
 }
 
 // Função para alternar entre tipos de usuário no registro
